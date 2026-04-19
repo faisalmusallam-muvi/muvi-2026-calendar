@@ -37,7 +37,7 @@ window.MUVI_MOVIES_2026 = [
   { month: 2, ar: "فرقة الموت", en: "Death Squad", genre: "saudi", date: "2026-03-05",
     overview: "فيلم أكشن سعودي عن فرقة عمليات خاصة.", runtime: 110, rating: "PG-13" },
   { month: 2, ar: "أسد", en: "Aseed", genre: "saudi", date: "2026-03-12",
-    overview: "دراما سعودية عن صعود وسقوط بطل شعبي.", runtime: 115, rating: "PG-13" },
+    noPoster: true, overview: "دراما سعودية عن صعود وسقوط بطل شعبي.", runtime: 115, rating: "PG-13" },
   { month: 2, ar: "ابن العسل", en: "Son of Honey", genre: "saudi", date: "2026-03-19",
     overview: "قصة عائلية سعودية مؤثرة عن الجذور والانتماء.", runtime: 108, rating: "PG" },
   { month: 2, ar: "Hoppers", en: "Hoppers", genre: "animation", date: "2026-03-19",

@@ -125,6 +125,7 @@ function MoviePoster({ movie, className = '' }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (movie.noPoster) { setError(true); setLoading(false); return; }
     let cancelled = false;
     (async () => {
       const result = await tmdbFetch(movie);
