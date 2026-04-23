@@ -1,10 +1,8 @@
 /* global React, ReactDOM */
-const { useState, useEffect, useRef, useMemo } = window.React;
+const { useState, useEffect, useRef, useMemo, useCallback } = window.React;
 
 // ---------- Tweaks panel ----------
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "theme": "purple"
-}/*EDITMODE-END*/;
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{ "theme": "purple" }/*EDITMODE-END*/;
 
 function TweaksPanel({ tweaks, setTweaks, visible, onClose }) {
   if (!visible) return null;
@@ -39,34 +37,102 @@ function TweaksPanel({ tweaks, setTweaks, visible, onClose }) {
   );
 }
 
+// ---------- Filter bar (genre + experience) ----------
+function FilterBar({ lang, genreFilter, setGenreFilter, expFilter, setExpFilter }) {
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
+  const genres = Object.entries(window.MUVI_GENRES || {});
+  const experiences = Object.entries(window.MUVI_EXPERIENCES || {});
+
+  return (
+    <div className="filter-bar">
+      <div className="container">
+        <div className="filter-bar-inner">
+          {/* Genre chips */}
+          <span className="filter-label">{t.filter_genre}</span>
+          <div className="filter-section">
+            <button
+              className={`filter-chip ${!genreFilter ? 'is-active' : ''}`}
+              style={!genreFilter ? { '--chip-color': 'var(--muvi-yellow)' } : {}}
+              onClick={() => setGenreFilter(null)}
+            >
+              {t.all}
+            </button>
+            {genres.map(([key, g]) => (
+              <button
+                key={key}
+                className={`filter-chip ${genreFilter === key ? 'is-active' : ''}`}
+                style={genreFilter === key ? { '--chip-color': g.color } : {}}
+                onClick={() => setGenreFilter(genreFilter === key ? null : key)}
+              >
+                <span className="chip-dot" style={{ background: g.color }} />
+                {lang === 'en' ? g.en : g.ar}
+              </button>
+            ))}
+          </div>
+
+          <span className="filter-sep" />
+
+          {/* Experience chips */}
+          <span className="filter-label">{t.filter_exp}</span>
+          <div className="filter-section">
+            {experiences.map(([key, e]) => (
+              <button
+                key={key}
+                className={`filter-chip ${expFilter === key ? 'is-active' : ''}`}
+                style={expFilter === key ? { '--chip-color': e.color } : {}}
+                onClick={() => setExpFilter(expFilter === key ? null : key)}
+              >
+                {e.en}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------- App ----------
 function App() {
   const movies = window.MUVI_MOVIES_2026;
   const picks = useMemo(() => movies.filter(m => m.pick), [movies]);
 
-  const [reminders, setReminders] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('muvi-reminders') || '[]')); }
-    catch { return new Set(); }
+  // ---------- State ----------
+  const [lang, setLangState] = useState(() => {
+    try { return localStorage.getItem('muvi-lang') || 'ar'; } catch { return 'ar'; }
+  });
+  const [genreFilter, setGenreFilter] = useState(null);
+  const [expFilter, setExpFilter]     = useState(null);
+  const [modalMovie, setModalMovie]   = useState(null);
+  const [reminders, setReminders]     = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('muvi-reminders') || '[]')); } catch { return new Set(); }
   });
   const [activeMonth, setActiveMonth] = useState(0);
-  const [trailerMovie, setTrailerMovie] = useState(null);
-  window.openTrailer = setTrailerMovie;
-
-  // Tweaks
-  const [tweaks, setTweaksState] = useState(() => {
-    try { return { ...TWEAK_DEFAULTS, ...JSON.parse(localStorage.getItem('muvi-tweaks') || '{}') }; }
-    catch { return TWEAK_DEFAULTS; }
+  const [tweaks, setTweaksState]      = useState(() => {
+    try { return { ...TWEAK_DEFAULTS, ...JSON.parse(localStorage.getItem('muvi-tweaks') || '{}') }; } catch { return TWEAK_DEFAULTS; }
   });
   const [tweaksVisible, setTweaksVisible] = useState(false);
+
+  // ---------- Language ----------
+  const setLang = useCallback((l) => {
+    setLangState(l);
+    try { localStorage.setItem('muvi-lang', l); } catch {}
+    document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'ar');
+    document.documentElement.setAttribute('dir', l === 'en' ? 'ltr' : 'rtl');
+    document.body.setAttribute('dir', l === 'en' ? 'ltr' : 'rtl');
+  }, []);
+
+  useEffect(() => {
+    setLang(lang); // apply on mount
+  }, []);
+
+  // ---------- Theme ----------
   const setTweaks = (t) => {
     setTweaksState(t);
     localStorage.setItem('muvi-tweaks', JSON.stringify(t));
     try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: t }, '*'); } catch {}
   };
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', tweaks.theme);
-  }, [tweaks.theme]);
+  useEffect(() => { document.documentElement.setAttribute('data-theme', tweaks.theme); }, [tweaks.theme]);
 
   // Edit-mode protocol
   useEffect(() => {
@@ -79,6 +145,11 @@ function App() {
     return () => window.removeEventListener('message', onMsg);
   }, []);
 
+  // ---------- Modal global ----------
+  window.openModal = setModalMovie;
+  window.openTrailer = setModalMovie; // backward compat
+
+  // ---------- Reminders ----------
   const toggleReminder = (id) => {
     setReminders(prev => {
       const next = new Set(prev);
@@ -88,7 +159,16 @@ function App() {
     });
   };
 
-  // Scroll spy
+  // ---------- Filtered movies ----------
+  const filteredMovies = useMemo(() => {
+    return movies.filter(m => {
+      if (genreFilter && m.genre !== genreFilter) return false;
+      if (expFilter && !(m.exp || []).includes(expFilter)) return false;
+      return true;
+    });
+  }, [movies, genreFilter, expFilter]);
+
+  // ---------- Scroll spy ----------
   useEffect(() => {
     const handler = () => {
       let best = 0, bestY = -Infinity;
@@ -96,10 +176,7 @@ function App() {
         const el = document.getElementById(`month-${i}`);
         if (!el) continue;
         const r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight * 0.45 && r.top > bestY) {
-          bestY = r.top;
-          best = i;
-        }
+        if (r.top < window.innerHeight * 0.5 && r.top > bestY) { bestY = r.top; best = i; }
       }
       setActiveMonth(best);
     };
@@ -111,47 +188,61 @@ function App() {
   const jumpToMonth = (i) => {
     const el = document.getElementById(`month-${i}`);
     if (!el) return;
-    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 130, behavior: 'smooth' });
   };
-
   const jumpToCalendar = () => {
     const el = document.getElementById('calendar');
-    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: 'smooth' });
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
   };
+
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
 
   return (
     <>
-      <window.Nav />
-      <window.Hero onJump={jumpToCalendar} />
+      <window.Nav lang={lang} setLang={setLang} />
+      <window.Hero onJump={jumpToCalendar} lang={lang} />
 
-      <window.PicksSection picks={picks} reminders={reminders} toggleReminder={toggleReminder} />
+      <window.PicksSection picks={picks} reminders={reminders} toggleReminder={toggleReminder} lang={lang} />
 
-      {/* Calendar */}
+      {/* Calendar section */}
       <section id="calendar" className="calendar-section">
         <div className="container">
           <header className="section-head">
-            <span className="eyebrow">السنة كاملة · شهرًا بشهر</span>
+            <span className="eyebrow">{t.cal_eyebrow}</span>
             <h2 className="section-title display">
-              تقويم <span style={{ color: 'var(--muvi-yellow)' }}>2026</span>
+              {t.cal_title} <span style={{ color: 'var(--muvi-yellow)' }}>{t.cal_title_accent}</span>
             </h2>
             <p className="section-sub">
-              اضغط على أي فيلم لمعرفة التاريخ، التصنيف، وضبط تذكير
+              {t.cal_sub}
               {reminders.size > 0 && (
-                <> — <strong style={{ color: 'var(--muvi-yellow)' }}>{reminders.size}</strong> تذكير محفوظ</>
+                <> — <strong style={{ color: 'var(--muvi-yellow)' }}>{reminders.size}</strong> {reminders.size === 1 ? t.film : t.films_pl}</>
               )}
             </p>
           </header>
+        </div>
 
+        {/* Sticky filter bar */}
+        <FilterBar
+          lang={lang}
+          genreFilter={genreFilter}
+          setGenreFilter={setGenreFilter}
+          expFilter={expFilter}
+          setExpFilter={setExpFilter}
+        />
+
+        <div className="container" style={{ marginTop: 40 }}>
           <div className="calendar-grid">
-            <window.MonthRail activeMonth={activeMonth} onJump={jumpToMonth} />
+            <window.MonthRail activeMonth={activeMonth} onJump={jumpToMonth} lang={lang} />
             <div className="months-stack">
               {window.MUVI_MONTHS_AR.map((_, i) => (
                 <window.MonthPanel
                   key={i}
                   index={i}
-                  movies={movies}
+                  movies={filteredMovies}
                   reminders={reminders}
                   toggleReminder={toggleReminder}
+                  lang={lang}
+                  onOpenMovie={setModalMovie}
                 />
               ))}
             </div>
@@ -159,10 +250,18 @@ function App() {
         </div>
       </section>
 
-      <window.Footer />
+      <window.Footer lang={lang} />
 
       <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} visible={tweaksVisible} onClose={() => setTweaksVisible(false)} />
-      {trailerMovie && <window.TrailerModal movie={trailerMovie} onClose={() => setTrailerMovie(null)} />}
+
+      {/* Rich movie modal */}
+      {modalMovie && (
+        <window.MovieModal
+          movie={modalMovie}
+          lang={lang}
+          onClose={() => setModalMovie(null)}
+        />
+      )}
     </>
   );
 }

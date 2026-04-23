@@ -9,11 +9,8 @@ const TMDB_BG_BASE  = 'https://image.tmdb.org/t/p/w1280';
 async function tmdbFetch(movie) {
   const cacheKey = `tmdb-v2-${movie.en}`;
   const cached = localStorage.getItem(cacheKey);
-  if (cached) {
-    try { return JSON.parse(cached); } catch {}
-  }
+  if (cached) { try { return JSON.parse(cached); } catch {} }
   try {
-    // Try direct movie lookup by ID first if known
     if (movie.tmdbId) {
       const r = await fetch(`https://api.themoviedb.org/3/movie/${movie.tmdbId}?language=en-US`, {
         headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json;charset=utf-8' }
@@ -27,7 +24,6 @@ async function tmdbFetch(movie) {
         }
       }
     }
-    // Fall back to search
     const q = encodeURIComponent(movie.en);
     const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}&year=2026&include_adult=false`, {
       headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json;charset=utf-8' }
@@ -36,7 +32,6 @@ async function tmdbFetch(movie) {
     const d = await r.json();
     let hit = (d.results || []).find(x => x.poster_path);
     if (!hit) {
-      // Retry without year constraint
       const r2 = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}&include_adult=false`, {
         headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json;charset=utf-8' }
       });
@@ -46,18 +41,13 @@ async function tmdbFetch(movie) {
       }
     }
     if (!hit) return null;
-    const out = {
-      poster: `${TMDB_IMG_BASE}${hit.poster_path}`,
-      backdrop: hit.backdrop_path ? `${TMDB_BG_BASE}${hit.backdrop_path}` : null,
-    };
+    const out = { poster: `${TMDB_IMG_BASE}${hit.poster_path}`, backdrop: hit.backdrop_path ? `${TMDB_BG_BASE}${hit.backdrop_path}` : null };
     localStorage.setItem(cacheKey, JSON.stringify(out));
     return out;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
-// ---------- Trailer fetch ----------
+// ---------- Trailer key ----------
 async function fetchTrailerKey(movie) {
   if (!movie.tmdbId) return null;
   const cacheKey = `tmdb-trailer-${movie.tmdbId}`;
@@ -79,46 +69,72 @@ async function fetchTrailerKey(movie) {
   } catch { return null; }
 }
 
-// ---------- Trailer modal ----------
-function TrailerModal({ movie, onClose }) {
-  const [ytKey, setYtKey] = useState(null);
-  const [status, setStatus] = useState('loading');
-
-  useEffect(() => {
-    if (!movie) return;
-    setYtKey(null); setStatus('loading');
-    fetchTrailerKey(movie).then(key => {
-      if (key) { setYtKey(key); setStatus('ready'); }
-      else setStatus('not-found');
+// ---------- Cast fetch ----------
+async function fetchCast(movie) {
+  if (!movie.tmdbId) return [];
+  const cacheKey = `tmdb-cast-${movie.tmdbId}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) { try { return JSON.parse(cached); } catch {} }
+  try {
+    const r = await fetch(`https://api.themoviedb.org/3/movie/${movie.tmdbId}/credits?language=en-US`, {
+      headers: { Authorization: `Bearer ${TMDB_TOKEN}` }
     });
-  }, [movie && movie.tmdbId]);
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  if (!movie) return null;
-  return (
-    <div className="trailer-overlay" onClick={onClose}>
-      <div className="trailer-box" onClick={e => e.stopPropagation()}>
-        <button className="trailer-close" onClick={onClose}>×</button>
-        {status === 'loading' && <div className="trailer-status">جاري التحميل...</div>}
-        {status === 'not-found' && <div className="trailer-status">الإعلان غير متاح حالياً</div>}
-        {status === 'ready' && ytKey && (
-          <iframe
-            src={`https://www.youtube.com/embed/${ytKey}?autoplay=1&rel=0`}
-            allow="autoplay; fullscreen; encrypted-media"
-            allowFullScreen
-          />
-        )}
-      </div>
-    </div>
-  );
+    if (!r.ok) return [];
+    const d = await r.json();
+    const cast = (d.cast || []).slice(0, 8).map(a => ({
+      id: a.id,
+      name: a.name,
+      character: a.character,
+      photo: a.profile_path ? `https://image.tmdb.org/t/p/w185${a.profile_path}` : null,
+    }));
+    localStorage.setItem(cacheKey, JSON.stringify(cast));
+    return cast;
+  } catch { return []; }
 }
 
-// ---------- Poster helper ----------
+// ---------- Add to Calendar helpers ----------
+function _calDate(iso) {
+  return iso.replace(/-/g, '');
+}
+function googleCalUrl(movie, lang) {
+  const start = _calDate(movie.date);
+  const d = new Date(movie.date);
+  d.setMinutes(d.getMinutes() + (movie.runtime || 120));
+  const end = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const title = encodeURIComponent(lang === 'en' ? movie.en : movie.ar);
+  const details = encodeURIComponent((movie.overview || '') + '\n\nmuvi Cinemas');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=muvi+Cinemas`;
+}
+function outlookCalUrl(movie, lang) {
+  const title = encodeURIComponent(lang === 'en' ? movie.en : movie.ar);
+  const details = encodeURIComponent(movie.overview || '');
+  return `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&startdt=${movie.date}&enddt=${movie.date}&body=${details}&location=muvi+Cinemas`;
+}
+function downloadIcal(movie, lang) {
+  const d = new Date(movie.date);
+  const fmt = dt => `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,'0')}${String(dt.getDate()).padStart(2,'0')}`;
+  const end = new Date(d.getTime() + (movie.runtime || 120) * 60000);
+  const title = lang === 'en' ? movie.en : movie.ar;
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0',
+    'PRODID:-//muvi Cinemas//muvi 2026//EN',
+    'BEGIN:VEVENT',
+    `DTSTART;VALUE=DATE:${fmt(d)}`,
+    `DTEND;VALUE=DATE:${fmt(end)}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${(movie.overview || '').replace(/\n/g, '\\n')}`,
+    'LOCATION:muvi Cinemas',
+    `UID:muvi-${movie.tmdbId || movie.en.replace(/\s+/g,'-')}-${fmt(d)}@muvi.com`,
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${(movie.en || movie.ar).replace(/[/:]/g,'')}.ics`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------- Poster component ----------
 function MoviePoster({ movie, className = '' }) {
   const [src, setSrc] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,138 +154,296 @@ function MoviePoster({ movie, className = '' }) {
   }, [movie.en]);
 
   const g = window.MUVI_GENRES[movie.genre];
-
   if (!loading && (!src || error)) {
     return (
       <div className={`poster-fallback ${className}`} style={{ '--accent': g.color }}>
         <div className="poster-fallback-inner">
           <div className="poster-fallback-genre">{g.ar.toUpperCase()}</div>
           <div className="poster-fallback-title">{movie.ar}</div>
-          <div className="poster-fallback-date ltr">{String(new Date(movie.date).getDate()).padStart(2, '0')} · 2026</div>
+          <div className="poster-fallback-date ltr">{String(new Date(movie.date).getDate()).padStart(2,'0')} · 2026</div>
         </div>
       </div>
     );
   }
-
   return (
     <div className={`poster-wrap ${className}`}>
       {(loading || !src) && <div className="poster-skeleton" />}
-      {src && (
-        <img
-          src={src}
-          alt={movie.en}
-          className="poster-img"
-          onError={() => setError(true)}
-        />
-      )}
+      {src && <img src={src} alt={movie.en} className="poster-img" onError={() => setError(true)} />}
     </div>
   );
 }
 
 // ---------- Genre Pill ----------
-function GenrePill({ genre }) {
+function GenrePill({ genre, lang }) {
   const g = window.MUVI_GENRES[genre];
   if (!g) return null;
+  const label = lang === 'en' ? g.en : g.ar;
   return (
     <span className="pill" style={{ color: g.color }}>
       <span className="dot" />
-      <span style={{ color: 'var(--ink-0)' }}>{g.ar}</span>
+      <span style={{ color: 'var(--ink-0)' }}>{label}</span>
     </span>
   );
 }
 
-// ---------- Movie Row (compact, in month panel) ----------
-function MovieRow({ movie, reminded, onRemind }) {
-  const [expanded, setExpanded] = useState(false);
+// ---------- Experience Badge ----------
+function ExpBadge({ exp }) {
+  const e = window.MUVI_EXPERIENCES?.[exp];
+  if (!e) return null;
+  return <span className="exp-badge" style={{ color: e.color }}>{e.en}</span>;
+}
+
+// ---------- Movie Modal (rich full-screen) ----------
+function MovieModal({ movie, lang, onClose }) {
+  const [posterData, setPosterData] = useState(null);
+  const [cast, setCast] = useState([]);
+  const [ytKey, setYtKey] = useState(null);
+  const [trailerVisible, setTrailerVisible] = useState(false);
+  const [calOpen, setCalOpen] = useState(false);
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
   const g = window.MUVI_GENRES[movie.genre];
-  const dateAr = window.fmtDateAr(movie.date);
   const days = window.daysUntil(movie.date);
   const past = days < 0;
 
+  useEffect(() => {
+    if (!movie) return;
+    setPosterData(null); setCast([]); setYtKey(null);
+    setTrailerVisible(false); setCalOpen(false);
+    tmdbFetch(movie).then(setPosterData);
+    fetchCast(movie).then(setCast);
+    fetchTrailerKey(movie).then(k => setYtKey(k || null));
+  }, [movie.tmdbId, movie.en]);
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, []);
+
+  const title = lang === 'en' ? movie.en : movie.ar;
+  const subTitle = lang === 'en' ? movie.ar : movie.en;
+  const dateStr = window.fmtDate ? window.fmtDate(movie.date, lang) : window.fmtDateAr(movie.date);
+
   return (
-    <div className={`movie-row ${expanded ? 'is-expanded' : ''} ${movie.pick ? 'is-pick' : ''}`}>
-      <button className="movie-row-head" onClick={() => setExpanded(v => !v)}>
-        {movie.pick && <span className="pick-badge">muvi pick</span>}
-
-        <div className="movie-title-block">
-          <span className="movie-day numeric ltr">
-            {String(new Date(movie.date).getDate()).padStart(2, '0')}
-          </span>
-          <span className="movie-title">{movie.ar}</span>
+    <div className="mmodal-overlay" onClick={onClose}>
+      <div
+        className="mmodal-box"
+        onClick={e => { e.stopPropagation(); setCalOpen(false); }}
+      >
+        {/* Blurred backdrop background */}
+        <div className="mmodal-bg">
+          {posterData?.backdrop && <img src={posterData.backdrop} className="mmodal-bg-img" alt="" />}
+          <div className="mmodal-bg-grad" style={{ background: `linear-gradient(135deg, rgba(6,3,13,0.97) 0%, rgba(6,3,13,0.65) 45%, ${g.color}22 100%), rgba(6,3,13,0.92)` }} />
         </div>
 
-        <div className="movie-row-meta">
-          <GenrePill genre={movie.genre} />
-          <span className="movie-chev">{expanded ? '−' : '+'}</span>
-        </div>
-      </button>
+        <button className="mmodal-close" onClick={onClose}>×</button>
 
-      {expanded && (
-        <div className="movie-row-body" style={{ '--accent': g.color }}>
-          <MoviePoster movie={movie} className="movie-row-poster" />
-          <div className="movie-body-left">
-            {movie.overview && (
-              <p className="movie-body-overview">{movie.overview}</p>
-            )}
-            <div className="movie-body-row">
-              <span className="movie-body-label">تاريخ العرض</span>
-              <span className="movie-body-val">{dateAr}</span>
+        <div className="mmodal-inner">
+          {/* Poster column */}
+          <div className="mmodal-poster-col">
+            <MoviePoster movie={movie} className="mmodal-poster-img" />
+          </div>
+
+          {/* Content column */}
+          <div className="mmodal-content">
+            {/* Badges row */}
+            <div className="mmodal-badges">
+              <GenrePill genre={movie.genre} lang={lang} />
+              {(movie.exp || []).map(e => <ExpBadge key={e} exp={e} />)}
             </div>
-            <div className="movie-body-row">
-              <span className="movie-body-label">التصنيف</span>
-              <span className="movie-body-val">{g.ar}</span>
+
+            {/* Title */}
+            <div>
+              <h2 className="mmodal-title" dir="auto">{title}</h2>
+              {subTitle && subTitle !== title && (
+                <div className="mmodal-en-title" dir="auto">{subTitle}</div>
+              )}
             </div>
-            <div className="movie-body-row">
-              <span className="movie-body-label">العنوان الأصلي</span>
-              <span className="movie-body-val ltr" dir="ltr">{movie.en}</span>
-            </div>
-            {movie.runtime && (
-              <div className="movie-body-row">
-                <span className="movie-body-label">المدة</span>
-                <span className="movie-body-val ltr">{movie.runtime} دقيقة</span>
+
+            {/* Overview */}
+            {movie.overview && <p className="mmodal-overview">{movie.overview}</p>}
+
+            {/* Cast */}
+            {cast.length > 0 && (
+              <div>
+                <div className="mmodal-cast-label">{t.cast}</div>
+                <div className="mmodal-cast-scroll">
+                  {cast.map(c => (
+                    <div key={c.id} className="mmodal-cast-person">
+                      <div className="mmodal-cast-photo">
+                        {c.photo
+                          ? <img src={c.photo} alt={c.name} />
+                          : <span style={{ fontSize: 20 }}>👤</span>
+                        }
+                      </div>
+                      <div className="mmodal-cast-name">{c.name}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            {movie.rating && (
-              <div className="movie-body-row">
-                <span className="movie-body-label">التصنيف العمري</span>
-                <span className="movie-body-val ltr">{movie.rating}</span>
+
+            {/* Meta grid */}
+            <div className="mmodal-meta">
+              <div className="mmodal-meta-item">
+                <span className="mmodal-meta-lbl">{t.release_date}</span>
+                <span className="mmodal-meta-val">{dateStr}</span>
               </div>
-            )}
-            {!past && (
-              <div className="movie-body-row">
-                <span className="movie-body-label">العد التنازلي</span>
-                <span className="movie-body-val ltr">
-                  <strong className="numeric" style={{ color: g.color }}>{days}</strong> يوم
+              {movie.runtime && (
+                <div className="mmodal-meta-item">
+                  <span className="mmodal-meta-lbl">{t.duration}</span>
+                  <span className="mmodal-meta-val ltr">{movie.runtime} {t.min}</span>
+                </div>
+              )}
+              {movie.rating && (
+                <div className="mmodal-meta-item">
+                  <span className="mmodal-meta-lbl">{t.age_rating}</span>
+                  <span className="mmodal-meta-val ltr">{movie.rating}</span>
+                </div>
+              )}
+              <div className="mmodal-meta-item">
+                <span className="mmodal-meta-lbl">{t.countdown}</span>
+                <span className="mmodal-meta-val" style={{ color: past ? 'var(--ink-3)' : g.color }}>
+                  {past ? t.released : <><strong>{days}</strong> {t.days}</>}
                 </span>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="movie-body-actions">
-            <button
-              className={`reminder-btn ${reminded ? 'is-on' : ''}`}
-              onClick={(e) => { e.stopPropagation(); onRemind(); }}
-            >
-              <span className="reminder-icon">{reminded ? '✓' : '🔔'}</span>
-              <span>{reminded ? 'سيتم تذكيرك' : 'ذكّرني عند الإصدار'}</span>
-            </button>
-            <button className="trailer-btn" onClick={(e) => { e.stopPropagation(); window.openTrailer && window.openTrailer(movie); }}>
-              <span className="ltr">▶</span>
-              <span>شاهد الإعلان</span>
-            </button>
+            {/* Actions */}
+            <div className="mmodal-actions">
+              {ytKey && (
+                <button
+                  className={`mmodal-btn-trailer ${trailerVisible ? 'is-active' : ''}`}
+                  onClick={e => { e.stopPropagation(); setTrailerVisible(v => !v); }}
+                >
+                  <span className="ltr">{trailerVisible ? '✕' : '▶'}</span>
+                  {trailerVisible ? t.hide_trailer : t.watch_trailer}
+                </button>
+              )}
+
+              <div className="mmodal-cal-wrap" onClick={e => e.stopPropagation()}>
+                <button
+                  className="mmodal-btn-cal"
+                  onClick={() => setCalOpen(v => !v)}
+                >
+                  <span>📅</span>
+                  {t.add_calendar}
+                </button>
+                {calOpen && (
+                  <div className="mmodal-cal-dropdown">
+                    <a
+                      href={googleCalUrl(movie, lang)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mmodal-cal-item"
+                    >
+                      <span className="mmodal-cal-icon" style={{ background: '#4285F4', color: '#fff' }}>G</span>
+                      {t.google_cal}
+                    </a>
+                    <button
+                      className="mmodal-cal-item"
+                      onClick={() => { downloadIcal(movie, lang); setCalOpen(false); }}
+                    >
+                      <span className="mmodal-cal-icon" style={{ background: '#1d1d1f', color: '#fff' }}>🍎</span>
+                      {t.apple_cal}
+                    </button>
+                    <a
+                      href={outlookCalUrl(movie, lang)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mmodal-cal-item"
+                    >
+                      <span className="mmodal-cal-icon" style={{ background: '#0078D4', color: '#fff' }}>O</span>
+                      {t.outlook_cal}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Embedded trailer (full-width, below content) */}
+        {trailerVisible && ytKey && (
+          <div className="mmodal-trailer">
+            <iframe
+              src={`https://www.youtube.com/embed/${ytKey}?autoplay=1&rel=0`}
+              allow="autoplay; fullscreen; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-// ---------- Single Month Panel ----------
-function MonthPanel({ index, movies, reminders, toggleReminder }) {
+// ---------- Movie Row (click to open modal) ----------
+function MovieRow({ movie, reminded, onRemind, lang, onOpen }) {
+  const g = window.MUVI_GENRES[movie.genre];
+  const days = window.daysUntil(movie.date);
+  const past = days < 0;
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
+
+  const title = lang === 'en' ? movie.en : movie.ar;
+  const sub = lang === 'en' ? movie.ar : movie.en;
+
+  return (
+    <div
+      className={`movie-row ${movie.pick ? 'is-pick' : ''}`}
+      onClick={onOpen}
+    >
+      <div className="movie-row-head" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center', padding: '16px 20px', background: 'transparent', border: 'none', width: '100%', textAlign: 'right', fontFamily: 'inherit', color: 'inherit' }}>
+        {movie.pick && <span className="pick-badge">muvi pick</span>}
+
+        <div className="movie-title-block" style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          <div className="movie-title-date" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span className="movie-day numeric ltr">
+              {String(new Date(movie.date).getDate()).padStart(2, '0')}
+            </span>
+            <span className="movie-title" dir="auto">{title}</span>
+          </div>
+          {sub && sub !== title && (
+            <span className="movie-en-sub" style={{ paddingRight: 58 }}>{sub}</span>
+          )}
+        </div>
+
+        <div className="movie-row-meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <GenrePill genre={movie.genre} lang={lang} />
+          {(movie.exp || []).slice(0, 1).map(e => <ExpBadge key={e} exp={e} />)}
+          {(movie.exp || []).length > 1 && (
+            <span style={{ fontSize: 10, color: 'var(--ink-3)', fontWeight: 700 }}>+{movie.exp.length - 1}</span>
+          )}
+          {!past && (
+            <span className="movie-days-badge" style={{ color: g.color }}>
+              <strong>{days}</strong>d
+            </span>
+          )}
+          <button
+            className={`reminder-btn-sm ${reminded ? 'is-on' : ''}`}
+            onClick={e => { e.stopPropagation(); onRemind(); }}
+            title={reminded ? t.reminded : t.remind}
+          >
+            {reminded ? '✓' : '🔔'}
+          </button>
+          <span className="movie-open-arrow">›</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Month Panel ----------
+function MonthPanel({ index, movies, reminders, toggleReminder, lang, onOpenMovie }) {
   const monthMovies = movies.filter(m => m.month === index);
   const picks = monthMovies.filter(m => m.pick).length;
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
   const monthAr = window.MUVI_MONTHS_AR[index];
   const monthEn = window.MUVI_MONTHS_EN[index];
+  const monthName = lang === 'en'
+    ? (window.MUVI_MONTHS_EN_FULL?.[index] || monthEn)
+    : monthAr;
 
   return (
     <article className="month-panel" id={`month-${index}`}>
@@ -279,50 +453,61 @@ function MonthPanel({ index, movies, reminders, toggleReminder }) {
           <span className="month-num-divider" />
           <span className="month-num-en numeric ltr">{monthEn}</span>
         </div>
-        <h2 className="month-name display">{monthAr}</h2>
+        <h2 className="month-name display">{monthName}</h2>
         <div className="month-meta">
           <span className="month-count numeric ltr">{monthMovies.length}</span>
-          <span className="month-count-label">فيلم</span>
+          <span className="month-count-label">{monthMovies.length === 1 ? t.film : t.films_pl}</span>
         </div>
       </header>
 
       <div className="month-body">
-        {monthMovies.map((m, i) => {
-          const id = `${m.month}-${i}`;
-          return (
-            <MovieRow
-              key={id}
-              movie={m}
-              reminded={reminders.has(id)}
-              onRemind={() => toggleReminder(id)}
-            />
-          );
-        })}
+        {monthMovies.length === 0 ? (
+          <div className="month-no-results">{t.no_results}</div>
+        ) : (
+          monthMovies.map((m, i) => {
+            const id = `${m.month}-${i}`;
+            return (
+              <MovieRow
+                key={id}
+                movie={m}
+                reminded={reminders.has(id)}
+                onRemind={() => toggleReminder(id)}
+                lang={lang}
+                onOpen={() => onOpenMovie && onOpenMovie(m)}
+              />
+            );
+          })
+        )}
       </div>
     </article>
   );
 }
 
-// ---------- Month Rail (sticky scroll-spy) ----------
-function MonthRail({ activeMonth, onJump }) {
+// ---------- Month Rail (scroll-spy) ----------
+function MonthRail({ activeMonth, onJump, lang }) {
+  const months = lang === 'en'
+    ? (window.MUVI_MONTHS_EN_FULL || window.MUVI_MONTHS_EN)
+    : window.MUVI_MONTHS_AR;
+
   return (
     <div className="month-rail">
       <div className="rail-line" />
-      {window.MUVI_MONTHS_AR.map((m, i) => {
-        const active = activeMonth === i;
-        return (
-          <button
-            key={i}
-            className={`rail-dot ${active ? 'is-active' : ''}`}
-            onClick={() => onJump(i)}
-          >
-            <span className="rail-num numeric ltr">{String(i + 1).padStart(2, '0')}</span>
-            <span className="rail-name">{m}</span>
-          </button>
-        );
-      })}
+      {months.map((m, i) => (
+        <button
+          key={i}
+          className={`rail-dot ${activeMonth === i ? 'is-active' : ''}`}
+          onClick={() => onJump(i)}
+        >
+          <span className="rail-num numeric ltr">{String(i + 1).padStart(2, '0')}</span>
+          <span className="rail-name">{lang === 'en' ? window.MUVI_MONTHS_EN[i] : m}</span>
+        </button>
+      ))}
     </div>
   );
 }
 
-Object.assign(window, { MovieRow, MonthPanel, MonthRail, GenrePill, MoviePoster, TrailerModal });
+Object.assign(window, {
+  MovieRow, MonthPanel, MonthRail, GenrePill, ExpBadge, MoviePoster, MovieModal,
+  // keep backward compat
+  TrailerModal: MovieModal,
+});

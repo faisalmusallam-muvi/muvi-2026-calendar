@@ -1,18 +1,13 @@
 /* global React, ReactDOM */
-const { useState, useEffect, useRef, useMemo } = React;
+const { useState, useEffect, useRef } = React;
 
-// ---------- Helpers ----------
+// ---------- Helpers (also on window for other files) ----------
 function fmtDateAr(iso) {
   const d = new Date(iso);
-  const day = d.getDate();
-  const month = window.MUVI_MONTHS_AR[d.getMonth()];
-  return `${day} ${month}`;
+  return `${d.getDate()} ${window.MUVI_MONTHS_AR[d.getMonth()]}`;
 }
-
 function daysUntil(iso) {
-  const now = new Date();
-  const target = new Date(iso);
-  return Math.ceil((target - now) / 86400000);
+  return Math.ceil((new Date(iso) - new Date()) / 86400000);
 }
 
 // ---------- Logo ----------
@@ -21,33 +16,47 @@ function MuviLogo({ height = 36 }) {
 }
 
 // ---------- Nav ----------
-function Nav() {
+function Nav({ lang, setLang }) {
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
+  const isEn = lang === 'en';
+
   return (
     <nav className="nav">
       <MuviLogo height={36} />
+
       <div className="nav-links">
-        <a href="#calendar">التقويم</a>
-        <a href="#picks">اختيارات muvi</a>
-        <a href="#months">الأشهر</a>
-        <a href="#reminders">تذكيراتي</a>
+        <a href="#calendar">{t.nav_calendar}</a>
+        <a href="#picks">{t.nav_picks}</a>
       </div>
-      <button className="nav-cta">احجز تذكرة</button>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button
+          className="lang-toggle"
+          onClick={() => setLang(isEn ? 'ar' : 'en')}
+          title={isEn ? 'العربية' : 'English'}
+        >
+          <span className={!isEn ? 'lt-active' : ''}>{isEn ? 'AR' : 'ع'}</span>
+          <span className="lt-sep">/</span>
+          <span className={isEn ? 'lt-active' : ''}>{isEn ? 'EN' : 'EN'}</span>
+        </button>
+        <button className="nav-cta">{t.nav_book}</button>
+      </div>
     </nav>
   );
 }
 
 // ---------- HERO ----------
-function Hero({ onJump }) {
+function Hero({ onJump, lang }) {
+  const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
   const ref = useRef(null);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const onMove = (e) => {
       const r = el.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      el.style.setProperty('--mx', x);
-      el.style.setProperty('--my', y);
+      el.style.setProperty('--mx', ((e.clientX - r.left) / r.width - 0.5).toString());
+      el.style.setProperty('--my', ((e.clientY - r.top) / r.height - 0.5).toString());
     };
     el.addEventListener('mousemove', onMove);
     return () => el.removeEventListener('mousemove', onMove);
@@ -64,40 +73,35 @@ function Hero({ onJump }) {
 
       <div className="hero-inner container">
         <div className="hero-meta">
-          <span className="eyebrow">تقويم muvi السينمائي</span>
+          <span className="eyebrow">{t.hero_eyebrow}</span>
           <span className="hero-meta-dot" />
           <span className="eyebrow ltr">2026 · 47 FILMS</span>
         </div>
 
         <h1 className="hero-title">
-          <span className="hero-line-1 display">أهم أفلام</span>
+          <span className="hero-line-1 display">{t.hero_line1}</span>
           <span className="hero-year numeric ltr">2026</span>
         </h1>
 
-        <p className="hero-sub">
-          سنة كاملة من الإثارة، الأكشن، الكوميديا والرعب —
-          <br/>
-          استكشف القائمة الكاملة، احفظ تذكير لكل فيلم، وعش الفرق.
-        </p>
+        <p className="hero-sub" dir={lang === 'en' ? 'ltr' : 'rtl'}>{t.hero_sub}</p>
 
         <div className="hero-ctas">
           <button className="btn btn-primary" onClick={onJump}>
-            استكشف التقويم
+            {t.hero_cta}
             <span className="ltr">↓</span>
           </button>
-          <button className="btn btn-ghost">شاهد العرض الترويجي</button>
+          <button className="btn btn-ghost">{t.hero_trailer}</button>
         </div>
 
         <div className="hero-stats">
-          <Stat label="فيلم" value="47" />
-          <Stat label="شهر" value="12" />
-          <Stat label="اختيارات muvi" value="12" sub="pick" />
-          <Stat label="إنتاج سعودي" value="04" sub="local" />
+          <Stat label={t.stat_films}  value="47" />
+          <Stat label={t.stat_months} value="12" />
+          <Stat label={t.stat_picks}  value="12" sub="pick" />
+          <Stat label={t.stat_saudi}  value="04" sub="local" />
         </div>
       </div>
 
-      {/* Marquee strip at bottom */}
-      <Marquee />
+      <Marquee lang={lang} />
     </section>
   );
 }
@@ -112,11 +116,10 @@ function Stat({ label, value, sub }) {
   );
 }
 
-function Marquee() {
-  const items = [
-    "أهم أفلام 2026", "47 إصدار", "اختيارات muvi", "إنتاج سعودي حصري",
-    "احفظ تذكيراتك", "عش الفرق", "تقويم متجدد", "Live the Difference"
-  ];
+function Marquee({ lang }) {
+  const arItems = ["أهم أفلام 2026", "47 إصدار", "اختيارات muvi", "إنتاج سعودي حصري", "احفظ تذكيراتك", "عش الفرق", "تقويم متجدد", "Live the Difference"];
+  const enItems = ["Best Films 2026", "47 Releases", "muvi Picks", "Saudi Originals", "Set Reminders", "Live the Difference", "Full Year Calendar", "عش الفرق"];
+  const items = lang === 'en' ? enItems : arItems;
   const all = [...items, ...items, ...items];
   return (
     <div className="marquee">
