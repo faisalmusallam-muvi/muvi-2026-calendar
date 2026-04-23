@@ -126,7 +126,7 @@ function Footer({ lang }) {
     <footer className="site-footer">
       <div className="container footer-inner">
         <div className="footer-brand">
-          <window.MuviLogo height={48} />
+          <img src="assets/cinemap-footer.svg" alt="Cinemap" className="footer-logo" />
           <p className="footer-tag">{t.footer_tag}</p>
         </div>
         <div className="footer-cols">
