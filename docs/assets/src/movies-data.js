@@ -12,7 +12,7 @@ function daysUntil(iso) {
 
 // ---------- Logo ----------
 function MuviLogo({ height = 36 }) {
-  return <img src="assets/cinemap-white.svg" alt="Cinemap" style={{ height, display: 'block' }} />;
+  return <img src="assets/cinemap-white.svg" alt="Cinemap" style={{ height, width: 'auto', display: 'block', borderRadius: 8 }} />;
 }
 
 // ---------- Nav ----------
@@ -22,7 +22,7 @@ function Nav({ lang, setLang }) {
 
   return (
     <nav className="nav">
-      <MuviLogo height={36} />
+      <MuviLogo height={48} />
 
       <div className="nav-links">
         <a href="#calendar">{t.nav_calendar}</a>
