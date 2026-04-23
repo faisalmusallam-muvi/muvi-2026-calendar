@@ -143,7 +143,7 @@ function Footer({ lang }) {
             <a href="#">{t.footer_pkg}</a>
           </div>
           <div>
-            <div className="footer-h">muvi</div>
+            <div className="footer-h">Cinemap</div>
             <a href="#">{t.footer_about}</a>
             <a href="#">{t.footer_jobs}</a>
             <a href="#">{t.footer_contact}</a>
@@ -151,7 +151,7 @@ function Footer({ lang }) {
         </div>
       </div>
       <div className="footer-bottom container">
-        <span className="ltr">© 2026 muvi Cinemas · Saudi Arabia</span>
+        <span className="ltr">© 2026 Cinemap · Saudi Arabia</span>
         <span className="footer-cr">{t.footer_dates}</span>
       </div>
     </footer>

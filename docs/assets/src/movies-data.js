@@ -12,7 +12,7 @@ function daysUntil(iso) {
 
 // ---------- Logo ----------
 function MuviLogo({ height = 36 }) {
-  return <img src="assets/muvi-logo-reversed.png" alt="muvi cinemas" style={{ height, display: 'block' }} />;
+  return <img src="assets/cinemap-white.svg" alt="Cinemap" style={{ height, display: 'block' }} />;
 }
 
 // ---------- Nav ----------
@@ -117,8 +117,8 @@ function Stat({ label, value, sub }) {
 }
 
 function Marquee({ lang }) {
-  const arItems = ["أهم أفلام 2026", "47 إصدار", "اختيارات muvi", "إنتاج سعودي حصري", "احفظ تذكيراتك", "عش الفرق", "تقويم متجدد", "Live the Difference"];
-  const enItems = ["Best Films 2026", "47 Releases", "muvi Picks", "Saudi Originals", "Set Reminders", "Live the Difference", "Full Year Calendar", "عش الفرق"];
+  const arItems = ["أهم أفلام 2026", "47 إصدار", "اختيارات Cinemap", "إنتاج سعودي حصري", "احفظ تذكيراتك", "عش الفرق", "تقويم متجدد", "Live the Difference"];
+  const enItems = ["Best Films 2026", "47 Releases", "Cinemap Picks", "Saudi Originals", "Set Reminders", "Live the Difference", "Full Year Calendar", "عش الفرق"];
   const items = lang === 'en' ? enItems : arItems;
   const all = [...items, ...items, ...items];
   return (

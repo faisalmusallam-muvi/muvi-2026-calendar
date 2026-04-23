@@ -102,13 +102,13 @@ function googleCalUrl(movie, lang) {
   d.setMinutes(d.getMinutes() + (movie.runtime || 120));
   const end = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
   const title = encodeURIComponent(lang === 'en' ? movie.en : movie.ar);
-  const details = encodeURIComponent((movie.overview || '') + '\n\nmuvi Cinemas');
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=muvi+Cinemas`;
+  const details = encodeURIComponent((movie.overview || '') + '\n\nCinemap');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=Cinemap`;
 }
 function outlookCalUrl(movie, lang) {
   const title = encodeURIComponent(lang === 'en' ? movie.en : movie.ar);
   const details = encodeURIComponent(movie.overview || '');
-  return `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&startdt=${movie.date}&enddt=${movie.date}&body=${details}&location=muvi+Cinemas`;
+  return `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&startdt=${movie.date}&enddt=${movie.date}&body=${details}&location=Cinemap`;
 }
 function downloadIcal(movie, lang) {
   const d = new Date(movie.date);
@@ -117,14 +117,14 @@ function downloadIcal(movie, lang) {
   const title = lang === 'en' ? movie.en : movie.ar;
   const ics = [
     'BEGIN:VCALENDAR', 'VERSION:2.0',
-    'PRODID:-//muvi Cinemas//muvi 2026//EN',
+    'PRODID:-//Cinemap//Cinemap 2026//EN',
     'BEGIN:VEVENT',
     `DTSTART;VALUE=DATE:${fmt(d)}`,
     `DTEND;VALUE=DATE:${fmt(end)}`,
     `SUMMARY:${title}`,
     `DESCRIPTION:${(movie.overview || '').replace(/\n/g, '\\n')}`,
-    'LOCATION:muvi Cinemas',
-    `UID:muvi-${movie.tmdbId || movie.en.replace(/\s+/g,'-')}-${fmt(d)}@muvi.com`,
+    'LOCATION:Cinemap',
+    `UID:cinemap-${movie.tmdbId || movie.en.replace(/\s+/g,'-')}-${fmt(d)}@cinemap.com`,
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n');
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
@@ -392,7 +392,7 @@ function MovieRow({ movie, reminded, onRemind, lang, onOpen }) {
 
   return (
     <div className={`movie-row ${movie.pick ? 'is-pick' : ''}`} onClick={onOpen}>
-      {movie.pick && <span className="pick-badge">muvi pick</span>}
+      {movie.pick && <span className="pick-badge">Cinemap pick</span>}
 
       {/* Thumbnail — only visible on mobile via CSS */}
       <div className="movie-row-thumb">
