@@ -394,18 +394,18 @@ function MovieRow({ movie, reminded, onRemind, lang, onOpen }) {
       className={`movie-row ${movie.pick ? 'is-pick' : ''}`}
       onClick={onOpen}
     >
-      <div className="movie-row-head" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center', padding: '16px 20px', background: 'transparent', border: 'none', width: '100%', textAlign: 'right', fontFamily: 'inherit', color: 'inherit' }}>
+      <div className="movie-row-head" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center', padding: '16px 20px', background: 'transparent', border: 'none', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
         {movie.pick && <span className="pick-badge">muvi pick</span>}
 
         <div className="movie-title-block" style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          <div className="movie-title-date" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div className="movie-title-date" style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <span className="movie-day numeric ltr">
               {String(new Date(movie.date).getDate()).padStart(2, '0')}
             </span>
             <span className="movie-title" dir="auto">{title}</span>
           </div>
           {sub && sub !== title && (
-            <span className="movie-en-sub" style={{ paddingRight: 58 }}>{sub}</span>
+            <span className="movie-en-sub" style={{ paddingRight: lang === 'en' ? 0 : 58, paddingLeft: lang === 'en' ? 58 : 0 }}>{sub}</span>
           )}
         </div>
 

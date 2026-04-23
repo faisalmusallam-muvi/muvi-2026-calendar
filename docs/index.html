@@ -214,12 +214,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* overflow-x: hidden breaks position:sticky — use clip instead */
+  overflow-x: clip;
 }
 
-body {
-  direction: rtl;
-}
+/* direction is controlled exclusively via the HTML dir attribute (set by JS) */
 
 /* English / numeric blocks left-to-right */
 .ltr { direction: ltr; unicode-bidi: isolate; }
@@ -715,13 +714,17 @@ section { position: relative; }
 
 .month-rail {
   position: sticky;
-  top: 80px;
+  top: 130px; /* nav ~70px + filter bar ~52px + buffer */
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  scrollbar-width: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 16px 0;
 }
-@media (max-width: 900px) { .month-rail { position: relative; top: 0; flex-direction: row; overflow-x: auto; padding: 8px 0; } }
+.month-rail::-webkit-scrollbar { display: none; }
+@media (max-width: 900px) { .month-rail { position: relative; top: 0; max-height: none; overflow-y: visible; flex-direction: row; overflow-x: auto; padding: 8px 0; } }
 .rail-line {
   position: absolute; right: 14px; top: 28px; bottom: 28px;
   width: 1px; background: var(--line);
@@ -816,7 +819,7 @@ section { position: relative; }
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 20px;
-  align-items: center;
+  align-items: start; /* top-align so meta stays at top when title wraps */
   padding: 18px 24px;
   background: transparent;
   border: none;
@@ -852,6 +855,8 @@ section { position: relative; }
   text-align: center;
   padding-left: 16px;
   border-left: 1px solid var(--line);
+  flex-shrink: 0;
+  padding-top: 2px; /* optical top-align with title text */
 }
 .movie-row.is-pick .movie-day { color: var(--muvi-yellow); }
 .movie-title {
@@ -861,6 +866,9 @@ section { position: relative; }
 }
 .movie-row-meta {
   display: flex; align-items: center; gap: 14px;
+  padding-top: 4px; /* optical align with title text */
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .movie-chev {
   font-size: 22px;
@@ -1338,16 +1346,20 @@ section { position: relative; }
 }
 .movie-row:hover .movie-open-arrow { color: var(--ink-1); transform: translateX(-3px); }
 [dir="ltr"] .movie-row:hover .movie-open-arrow { transform: translateX(3px); }
-/* Truncate long titles in the movie row */
+/* Movie title — show up to 2 lines so users can read without clicking */
 .movie-title {
   flex: 1;
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
-.movie-title-date { overflow: hidden; }
-.movie-title-block { min-width: 0; overflow: hidden; }
+.movie-title-date { overflow: visible; align-items: flex-start !important; }
+.movie-title-block { min-width: 0; }
 
 /* No-results state */
 .month-no-results {
@@ -1718,6 +1730,47 @@ section { position: relative; }
   .filter-bar-inner { gap: 6px; }
   .filter-label { display: none; }
 }
+
+/* ===================================================================
+   LTR LAYOUT OVERRIDES
+   Applied when user switches to English — flips all RTL-anchored rules
+   =================================================================== */
+
+/* Section headers */
+[dir="ltr"] .section-head { text-align: left; }
+
+/* Hero stats row — flip border separators */
+[dir="ltr"] .stat { border-left: none; border-right: 1px solid var(--line); }
+[dir="ltr"] .stat:first-child { padding-left: 0; padding-right: 24px; }
+[dir="ltr"] .stat:last-child { border-right: none; }
+
+/* Month rail — indicator dot & line on the left in LTR */
+[dir="ltr"] .rail-line { right: auto; left: 14px; }
+[dir="ltr"] .rail-dot { text-align: left; }
+[dir="ltr"] .rail-dot::before { right: auto; left: 10px; }
+[dir="ltr"] .rail-num { padding-right: 0; padding-left: 14px; }
+
+/* Picks section */
+[dir="ltr"] .pick-badge { right: auto; left: 16px; }
+[dir="ltr"] .pf-tl { right: auto; left: 28px; }
+[dir="ltr"] .pf-tr { left: auto; right: 28px; }
+[dir="ltr"] .pick-card { text-align: left; }
+[dir="ltr"] .pick-card-bar { transform-origin: left; }
+
+/* Movie row date column — border separator on right in LTR */
+[dir="ltr"] .movie-day {
+  padding-left: 0;
+  padding-right: 16px;
+  border-left: none;
+  border-right: 1px solid var(--line);
+}
+[dir="ltr"] .movie-row-head { text-align: left; }
+[dir="ltr"] .movie-open-arrow { transform: scaleX(-1); }
+[dir="ltr"] .movie-row:hover .movie-open-arrow { transform: scaleX(-1) translateX(-3px); }
+[dir="ltr"] .movie-row-meta { justify-content: flex-start; }
+
+/* Month panel head in LTR */
+[dir="ltr"] .month-panel .section-head { text-align: left; }
 </style>
 
 
