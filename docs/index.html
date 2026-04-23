@@ -714,8 +714,8 @@ section { position: relative; }
 
 .month-rail {
   position: sticky;
-  top: 170px; /* nav ~70px + filter bar ~50px + month bar ~44px + buffer */
-  max-height: calc(100vh - 170px);
+  top: 185px; /* nav 71px + filter 49px + month-bar 61px + 4px buffer */
+  max-height: calc(100vh - 185px);
   overflow-y: auto;
   scrollbar-width: none;
   display: flex;
@@ -724,7 +724,8 @@ section { position: relative; }
   padding: 16px 0;
 }
 .month-rail::-webkit-scrollbar { display: none; }
-@media (max-width: 900px) { .month-rail { position: relative; top: 0; max-height: none; overflow-y: visible; flex-direction: row; overflow-x: auto; padding: 8px 0; } }
+/* Hide sidebar rail on mobile — MonthBar at top handles navigation there */
+@media (max-width: 900px) { .month-rail { display: none; } }
 .rail-line {
   position: absolute; right: 14px; top: 28px; bottom: 28px;
   width: 1px; background: var(--line);
@@ -770,7 +771,7 @@ section { position: relative; }
 /* Months stack */
 .months-stack { display: flex; flex-direction: column; gap: 64px; }
 
-.month-panel { scroll-margin-top: 175px; }
+.month-panel { scroll-margin-top: 188px; }
 .month-head {
   display: grid;
   grid-template-columns: auto 1fr auto;
