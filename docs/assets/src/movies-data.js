@@ -12,7 +12,7 @@ function daysUntil(iso) {
 
 // ---------- Logo ----------
 function MuviLogo({ height = 36 }) {
-  return <img src="assets/cinemap-white.svg" alt="Cinemap" style={{ height, width: 'auto', display: 'block', borderRadius: 8 }} />;
+  return <img src="assets/cinemap-white.svg" alt="Cinemap" style={{ height, width: 'auto', display: 'block' }} />;
 }
 
 // ---------- Nav ----------
