@@ -414,14 +414,15 @@ function MovieRow({ movie, reminded, onRemind, lang, onOpen }) {
               {sub}
             </span>
           )}
-          {/* Mobile-only second line: genre + short date */}
+          {/* Mobile-only second line: date · genre · exp badges */}
           <div className="movie-row-mobile-info">
-            <GenrePill genre={movie.genre} lang={lang} />
             <span className="numeric ltr" style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 700 }}>
               {dayNum} · {lang === 'en'
                 ? (window.MUVI_MONTHS_EN?.[movie.month] || '')
                 : (window.MUVI_MONTHS_AR?.[movie.month] || '')}
             </span>
+            <GenrePill genre={movie.genre} lang={lang} />
+            {(movie.exp || []).slice(0, 2).map(e => <ExpBadge key={e} exp={e} />)}
           </div>
         </div>
 

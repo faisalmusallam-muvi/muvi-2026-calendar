@@ -592,6 +592,22 @@ section { position: relative; }
 .pf-tl { top: 24px; right: 28px; color: var(--muvi-yellow); }
 .pf-tr { top: 24px; left: 28px; color: var(--ink-2); }
 
+@keyframes pick-content-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pick-prog {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.pick-progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 3px; z-index: 3; overflow: hidden;
+}
+.pick-progress-bar {
+  height: 100%; background: var(--accent, #ffa300);
+  transform-origin: left; animation: pick-prog 5s linear forwards;
+}
+[dir="ltr"] .pick-progress-bar { transform-origin: left; }
 .pick-feature-content {
   position: relative;
   z-index: 1;
@@ -600,6 +616,7 @@ section { position: relative; }
   display: flex;
   flex-direction: column;
   gap: 20px;
+  animation: pick-content-in 0.45s ease forwards;
 }
 .pick-meta-line {
   display: flex; align-items: center; gap: 14px;
@@ -1818,9 +1835,9 @@ section { position: relative; }
   .movie-row-thumb .poster-fallback {
     border-radius: 8px !important;
     width: 100% !important;
-    height: 100%;
+    height: 82px !important;
     aspect-ratio: auto !important;
-    min-height: 82px;
+    min-height: unset;
   }
 
   /* Row head: keep grid (title | meta) but compact */

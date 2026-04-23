@@ -64,6 +64,9 @@ window.MUVI_MOVIES_2026 = [
     overview: "دراما رياضية عن أعظم لاعب في التاريخ.", runtime: 120, rating: "PG-13" },
 
   // MAY — مايو
+  { month: 4, ar: "Mortal Kombat 2", en: "Mortal Kombat 2", genre: "action", date: "2026-05-07",
+    exp: ['screenx', '4dx'],
+    overview: "الجزء الثاني من فيلم القتال الأيقوني — عوالم جديدة ومعارك أضخم.", runtime: 115, rating: "R" },
   { month: 4, ar: "Star Wars: The Mandalorian and Grogu", en: "The Mandalorian and Grogu", genre: "scifi", date: "2026-05-22", pick: true,
     tmdbId: 1228710, exp: ['imax', 'dolby', '4dx'],
     overview: "أول فيلم سينمائي لسلسلة The Mandalorian — ماندو وغروغو في مغامرة جديدة.", runtime: 130, rating: "PG" },
@@ -71,6 +74,8 @@ window.MUVI_MOVIES_2026 = [
     tmdbId: 1301421, overview: "ثلاثة خراف يحلّون جريمة قتل في قرية إيرلندية — تحقيق كوميدي مثير بأصوات هيو جاكمان وإيما تومبسون.", runtime: 96, rating: "PG" },
 
   // JUNE — يونيو
+  { month: 5, ar: "Scary Movie 6", en: "Scary Movie 6", genre: "comedy", date: "2026-06-12",
+    overview: "الجزء السادس من سلسلة المحاكاة الكوميدية الشهيرة.", runtime: 92, rating: "PG-13" },
   { month: 5, ar: "Supergirl", en: "Supergirl: Woman of Tomorrow", genre: "action", date: "2026-06-26",
     tmdbId: 1081003, exp: ['imax', 'screenx'],
     overview: "كارا زور-إل تنطلق في مغامرة عبر المجرات.", runtime: 128, rating: "PG-13" },
@@ -99,6 +104,10 @@ window.MUVI_MOVIES_2026 = [
     overview: "الجزء الجديد من سلسلة Evil Dead — الشياطين تحترق.", runtime: 100, rating: "R" },
 
   // AUGUST — أغسطس
+  { month: 7, ar: "The End of Oak Street", en: "The End of Oak Street", genre: "thriller", date: "2026-08-13",
+    overview: "إثارة نفسية من وارنر براذرز عن أسرار شارع قديم.", runtime: 108, rating: "R" },
+  { month: 7, ar: "The Dog Stars", en: "The Dog Stars", genre: "scifi", date: "2026-08-27",
+    overview: "ملحمة ما بعد الكارثة من المخرج ريدلي سكوت — آخر البشر يبحثون عن أمل.", runtime: 120, rating: "PG-13" },
   { month: 7, ar: "Insidious 6", en: "Insidious: 6", genre: "horror", date: "2026-08-07",
     exp: ['4dx'],
     overview: "عودة عائلة Lambert إلى العالم الآخر.", runtime: 108, rating: "PG-13" },
@@ -109,6 +118,10 @@ window.MUVI_MOVIES_2026 = [
     overview: "الذئب القيوط يقاضي شركة ACME بعد سلسلة من الحوادث.", runtime: 98, rating: "PG" },
 
   // SEPTEMBER — سبتمبر
+  { month: 8, ar: "How to Rob a Bank", en: "How to Rob a Bank", genre: "comedy", date: "2026-09-03",
+    overview: "كوميديا سطو خفيفة من Amazon MGM Studios.", runtime: 100, rating: "PG-13" },
+  { month: 8, ar: "In the Heart of the Beast", en: "In the Heart of the Beast", genre: "action", date: "2026-09-25",
+    overview: "براد بيت في مغامرة أكشن ضخمة من باراماونت.", runtime: 128, rating: "R" },
   { month: 8, ar: "Forgotten Island", en: "Forgotten Island", genre: "thriller", date: "2026-09-04",
     overview: "إثارة على جزيرة مهجورة تخفي أسرار كثيرة.", runtime: 112, rating: "PG-13" },
   { month: 8, ar: "Resident Evil", en: "Resident Evil", genre: "horror", date: "2026-09-18", pick: true,
@@ -118,6 +131,10 @@ window.MUVI_MOVIES_2026 = [
     tmdbId: 1400940, overview: "قصة الشرير الأيقوني Clayface من عالم DC.", runtime: 115, rating: "R" },
 
   // OCTOBER — أكتوبر
+  { month: 9, ar: "Other Mommy", en: "Other Mommy", genre: "horror", date: "2026-10-08",
+    overview: "رعب نفسي من Universal — طفل يكتشف أن أمه ليست من يدّعي.", runtime: 105, rating: "R" },
+  { month: 9, ar: "Whalefall", en: "Whalefall", genre: "thriller", date: "2026-10-15",
+    overview: "إثارة من ديزني — غوّاص يُبتلع بالخطأ ويقاتل للنجاة.", runtime: 112, rating: "PG-13" },
   { month: 9, ar: "Street Fighter", en: "Street Fighter", genre: "action", date: "2026-10-16", pick: true,
     tmdbId: 1153576, exp: ['screenx', '4dx', 'imax'],
     overview: "اقتباس لايف آكشن للعبة القتال الأيقونية.", runtime: 120, rating: "PG-13" },
@@ -129,6 +146,12 @@ window.MUVI_MOVIES_2026 = [
     overview: "إثارة نفسية مقتبسة عن رواية نيكولاس سباركس.", runtime: 110, rating: "PG-13" },
 
   // NOVEMBER — نوفمبر
+  { month: 10, ar: "Wild Horse Nine", en: "Wild Horse Nine", genre: "comedy", date: "2026-11-05",
+    overview: "كوميديا سوداء من المخرج مارتن مكدونا — عملاء CIA في مغامرة فوضوية.", runtime: 110, rating: "R" },
+  { month: 10, ar: "I Play Rocky", en: "I Play Rocky", genre: "drama", date: "2026-11-12",
+    overview: "حكاية الروكي الحقيقي — درامية عن سيلفستر ستالون ونجاح صنعه بإرادته.", runtime: 118, rating: "PG-13" },
+  { month: 10, ar: "Ebenezer Scrooge", en: "Ebenezer Scrooge", genre: "drama", date: "2026-11-12",
+    overview: "جوني ديب في دور سكروج — تحويل أدبي حديث لقصة ديكنز الكلاسيكية.", runtime: 120, rating: "PG-13" },
   { month: 10, ar: "Meet the Parents 4", en: "Meet the Parents: A Little Fokking in the House", genre: "comedy", date: "2026-11-06",
     overview: "عودة غريغ فوكر وعائلته في مغامرة كوميدية جديدة.", runtime: 108, rating: "PG-13" },
   { month: 10, ar: "Hexed", en: "Hexed", genre: "horror", date: "2026-11-13",
@@ -140,6 +163,9 @@ window.MUVI_MOVIES_2026 = [
     overview: "ألعاب الجوع — قصة هايمتش أبرناثي قبل كاتنيس بعقود.", runtime: 140, rating: "PG-13" },
 
   // DECEMBER — ديسمبر
+  { month: 11, ar: "Violent Night 2", en: "Violent Night 2", genre: "action", date: "2026-12-03",
+    exp: ['4dx'],
+    overview: "بابا نويل العنيف يعود — أكشن كوميدي ملحمي لعيد الميلاد.", runtime: 105, rating: "R" },
   { month: 11, ar: "Dune 3", en: "Dune: Part Three", genre: "scifi", date: "2026-12-18",
     tmdbId: 1935783, exp: ['imax', 'dolby', 'screenx'],
     overview: "الجزء الثالث من ملحمة ديون — بول أتريديس إمبراطور الكون.", runtime: 170, rating: "PG-13" },

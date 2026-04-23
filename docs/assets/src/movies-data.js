@@ -75,7 +75,7 @@ function Hero({ onJump, lang }) {
         <div className="hero-meta">
           <span className="eyebrow">{t.hero_eyebrow}</span>
           <span className="hero-meta-dot" />
-          <span className="eyebrow ltr">2026 · 47 FILMS</span>
+          <span className="eyebrow ltr">2026 · 61 FILMS</span>
         </div>
 
         <h1 className="hero-title">
@@ -94,7 +94,7 @@ function Hero({ onJump, lang }) {
         </div>
 
         <div className="hero-stats">
-          <Stat label={t.stat_films}  value="47" />
+          <Stat label={t.stat_films}  value="61" />
           <Stat label={t.stat_months} value="12" />
           <Stat label={t.stat_picks}  value="12" sub="pick" />
           <Stat label={t.stat_saudi}  value="04" sub="local" />
@@ -117,7 +117,7 @@ function Stat({ label, value, sub }) {
 }
 
 function Marquee({ lang }) {
-  const arItems = ["أهم أفلام 2026", "47 إصدار", "اختيارات Cinemap", "إنتاج سعودي حصري", "احفظ تذكيراتك", "عش الفرق", "تقويم متجدد", "Live the Difference"];
+  const arItems = ["أهم أفلام 2026", "61 إصدار", "اختيارات Cinemap", "إنتاج سعودي حصري", "احفظ تذكيراتك", "عش الفرق", "تقويم متجدد", "Live the Difference"];
   const enItems = ["Best Films 2026", "47 Releases", "Cinemap Picks", "Saudi Originals", "Set Reminders", "Live the Difference", "Full Year Calendar", "عش الفرق"];
   const items = lang === 'en' ? enItems : arItems;
   const all = [...items, ...items, ...items];

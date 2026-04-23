@@ -4,6 +4,23 @@ const { useState, useEffect, useRef, useMemo } = window.React;
 // ---------- Picks of the year — featured ----------
 function PicksSection({ picks, reminders, toggleReminder, lang }) {
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const pauseRef = useRef(null);
+
+  // Auto-rotate every 5s; pause 12s after manual click
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setActive(a => (a + 1) % picks.length), 5000);
+    return () => clearInterval(id);
+  }, [picks.length, paused]);
+
+  const handlePickClick = (i) => {
+    setActive(i);
+    setPaused(true);
+    if (pauseRef.current) clearTimeout(pauseRef.current);
+    pauseRef.current = setTimeout(() => setPaused(false), 12000);
+  };
+
   const current = picks[active];
   const g = window.MUVI_GENRES[current.genre];
   const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
@@ -37,7 +54,14 @@ function PicksSection({ picks, reminders, toggleReminder, lang }) {
                 <span className="numeric ltr">{String(active + 1).padStart(2, '0')} / {picks.length}</span>
               </div>
 
-              <div className="pick-feature-content">
+              {/* Progress bar — resets on each active change via key */}
+              {!paused && (
+                <div className="pick-progress">
+                  <div className="pick-progress-bar" key={active} />
+                </div>
+              )}
+
+              <div className="pick-feature-content" key={active}>
                 <div className="pick-meta-line">
                   <window.GenrePill genre={current.genre} lang={lang} />
                   {(current.exp || []).slice(0, 3).map(e => <window.ExpBadge key={e} exp={e} />)}
@@ -100,7 +124,7 @@ function PicksSection({ picks, reminders, toggleReminder, lang }) {
                 <button
                   key={i}
                   className={`pick-card ${isActive ? 'is-active' : ''}`}
-                  onClick={() => setActive(i)}
+                  onClick={() => handlePickClick(i)}
                   style={{ '--accent': pg.color }}
                 >
                   <div className="pick-card-num numeric ltr">{String(i + 1).padStart(2, '0')}</div>
