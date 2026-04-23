@@ -387,34 +387,48 @@ function MovieRow({ movie, reminded, onRemind, lang, onOpen }) {
   const t = window.MUVI_I18N?.[lang] || window.MUVI_I18N?.ar;
 
   const title = lang === 'en' ? movie.en : movie.ar;
-  const sub = lang === 'en' ? movie.ar : movie.en;
+  const sub   = lang === 'en' ? movie.ar : movie.en;
+  const dayNum = String(new Date(movie.date).getDate()).padStart(2, '0');
 
   return (
-    <div
-      className={`movie-row ${movie.pick ? 'is-pick' : ''}`}
-      onClick={onOpen}
-    >
-      <div className="movie-row-head" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center', padding: '16px 20px', background: 'transparent', border: 'none', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
-        {movie.pick && <span className="pick-badge">muvi pick</span>}
+    <div className={`movie-row ${movie.pick ? 'is-pick' : ''}`} onClick={onOpen}>
+      {movie.pick && <span className="pick-badge">muvi pick</span>}
 
-        <div className="movie-title-block" style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          <div className="movie-title-date" style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            <span className="movie-day numeric ltr">
-              {String(new Date(movie.date).getDate()).padStart(2, '0')}
-            </span>
+      {/* Thumbnail — only visible on mobile via CSS */}
+      <div className="movie-row-thumb">
+        <MoviePoster movie={movie} />
+      </div>
+
+      {/* Row content — all layout controlled by CSS classes (no inline grid) */}
+      <div className="movie-row-head">
+
+        {/* Title block */}
+        <div className="movie-title-block">
+          <div className="movie-title-date">
+            <span className="movie-day numeric ltr">{dayNum}</span>
             <span className="movie-title" dir="auto">{title}</span>
           </div>
           {sub && sub !== title && (
-            <span className="movie-en-sub" style={{ paddingRight: lang === 'en' ? 0 : 58, paddingLeft: lang === 'en' ? 58 : 0 }}>{sub}</span>
+            <span className="movie-en-sub"
+              style={{ paddingRight: lang === 'en' ? 0 : 58, paddingLeft: lang === 'en' ? 58 : 0 }}>
+              {sub}
+            </span>
           )}
+          {/* Mobile-only second line: genre + short date */}
+          <div className="movie-row-mobile-info">
+            <GenrePill genre={movie.genre} lang={lang} />
+            <span className="numeric ltr" style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 700 }}>
+              {dayNum} · {lang === 'en'
+                ? (window.MUVI_MONTHS_EN?.[movie.month] || '')
+                : (window.MUVI_MONTHS_AR?.[movie.month] || '')}
+            </span>
+          </div>
         </div>
 
-        <div className="movie-row-meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Desktop meta: genre · countdown · bell · arrow
+            (experience badges removed — shown in modal only) */}
+        <div className="movie-row-meta">
           <GenrePill genre={movie.genre} lang={lang} />
-          {(movie.exp || []).slice(0, 1).map(e => <ExpBadge key={e} exp={e} />)}
-          {(movie.exp || []).length > 1 && (
-            <span style={{ fontSize: 10, color: 'var(--ink-3)', fontWeight: 700 }}>+{movie.exp.length - 1}</span>
-          )}
           {!past && (
             <span className="movie-days-badge" style={{ color: g.color }}>
               <strong>{days}</strong>d
@@ -483,7 +497,42 @@ function MonthPanel({ index, movies, reminders, toggleReminder, lang, onOpenMovi
   );
 }
 
-// ---------- Month Rail (scroll-spy) ----------
+// ---------- Month Bar (sticky horizontal — always visible) ----------
+function MonthBar({ activeMonth, onJump, lang }) {
+  const activeRef = useRef(null);
+
+  useEffect(() => {
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activeMonth]);
+
+  return (
+    <div className="month-bar">
+      <div className="month-bar-scroll">
+        {window.MUVI_MONTHS_AR.map((_, i) => {
+          const name = lang === 'en'
+            ? (window.MUVI_MONTHS_EN?.[i] || '')
+            : (window.MUVI_MONTHS_AR?.[i] || '');
+          const isActive = activeMonth === i;
+          return (
+            <button
+              key={i}
+              ref={isActive ? activeRef : null}
+              className={`month-bar-btn ${isActive ? 'is-active' : ''}`}
+              onClick={() => onJump(i)}
+            >
+              <span className="month-bar-num numeric ltr">{String(i + 1).padStart(2, '0')}</span>
+              <span className="month-bar-name">{name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Month Rail (scroll-spy sidebar — desktop) ----------
 function MonthRail({ activeMonth, onJump, lang }) {
   const months = lang === 'en'
     ? (window.MUVI_MONTHS_EN_FULL || window.MUVI_MONTHS_EN)
@@ -507,7 +556,7 @@ function MonthRail({ activeMonth, onJump, lang }) {
 }
 
 Object.assign(window, {
-  MovieRow, MonthPanel, MonthRail, GenrePill, ExpBadge, MoviePoster, MovieModal,
+  MovieRow, MonthPanel, MonthRail, MonthBar, GenrePill, ExpBadge, MoviePoster, MovieModal,
   // keep backward compat
   TrailerModal: MovieModal,
 });

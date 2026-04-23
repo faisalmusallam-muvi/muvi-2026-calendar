@@ -185,10 +185,20 @@ function App() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
+  // Dynamically compute offset from all sticky headers stacked above
+  const getStickyOffset = () => {
+    let h = 0;
+    ['.nav', '.filter-bar', '.month-bar'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) h += el.offsetHeight;
+    });
+    return h + 10;
+  };
+
   const jumpToMonth = (i) => {
     const el = document.getElementById(`month-${i}`);
     if (!el) return;
-    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 130, behavior: 'smooth' });
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - getStickyOffset(), behavior: 'smooth' });
   };
   const jumpToCalendar = () => {
     const el = document.getElementById('calendar');
@@ -230,7 +240,10 @@ function App() {
           setExpFilter={setExpFilter}
         />
 
-        <div className="container" style={{ marginTop: 40 }}>
+        {/* Sticky month bar — below filter bar on all screens */}
+        <window.MonthBar activeMonth={activeMonth} onJump={jumpToMonth} lang={lang} />
+
+        <div className="container" style={{ marginTop: 32 }}>
           <div className="calendar-grid">
             <window.MonthRail activeMonth={activeMonth} onJump={jumpToMonth} lang={lang} />
             <div className="months-stack">
