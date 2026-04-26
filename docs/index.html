@@ -727,7 +727,11 @@ section { position: relative; }
   gap: 48px;
   align-items: start;
 }
-@media (max-width: 900px) { .calendar-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .calendar-grid { grid-template-columns: 1fr; }
+  .months-stack { min-width: 0; }
+  .month-panel, .month-body, .movie-row { min-width: 0; overflow: hidden; }
+}
 
 .month-rail {
   position: sticky;
